@@ -71,5 +71,6 @@ def configure_logging() -> None:
     logging.getLogger("uvicorn.access").handlers = []
     logging.getLogger("uvicorn.access").propagate = False
 
-    # httpx logs every LLM request at INFO; keep it quiet unless debugging
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+    # HTTP client internals are too chatty even in debug mode
+    for name in ("httpx", "httpx2", "httpcore", "httpcore2", "openai"):
+        logging.getLogger(name).setLevel(logging.WARNING)

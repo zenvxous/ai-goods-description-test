@@ -8,6 +8,7 @@ from openai import AsyncOpenAI
 
 from app.api.v1.router import router
 from app.core.dependencies import settings
+from app.exception_handlers import register_exception_handlers
 from app.logging_config import configure_logging
 from app.middlewares.logging import AccessLogMiddleware
 
@@ -47,4 +48,5 @@ app.add_middleware(
 )
 app.add_middleware(AccessLogMiddleware)
 
+register_exception_handlers(app)
 app.include_router(router)

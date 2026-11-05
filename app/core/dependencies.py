@@ -5,6 +5,7 @@ from fastapi import Depends, Request
 from openai import AsyncOpenAI
 
 from app.core.config import Settings
+from app.services.generation import ProductCardGenerator
 
 
 @lru_cache
@@ -20,3 +21,10 @@ def get_llm_client(request: Request) -> AsyncOpenAI:
 
 
 LLMClientDep = Annotated[AsyncOpenAI, Depends(get_llm_client)]
+
+
+def get_card_generator(llm_client: LLMClientDep) -> ProductCardGenerator:
+    return ProductCardGenerator(llm_client, settings)
+
+
+CardGeneratorDep = Annotated[ProductCardGenerator, Depends(get_card_generator)]

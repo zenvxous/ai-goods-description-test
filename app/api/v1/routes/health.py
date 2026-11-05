@@ -22,19 +22,23 @@ async def liveness_check() -> dict[str, Any]:
 
 
 async def check_llm(llm_client: AsyncOpenAI) -> dict[str, Any]:
+    # GET /models/{id} is not supported by every OpenAI-compatible provider (e.g. OpenRouter),
+    # so the model is looked up in the list instead
     started = time.perf_counter()
     try:
-        await llm_client.models.retrieve(settings.llm_model, timeout=5.0)
+        page = await llm_client.models.list(timeout=5.0)
+        detail = None
+        if settings.llm_model not in {model.id for model in page.data}:
+            detail = f"Model '{settings.llm_model}' not found"
     except Exception as e:
-        latency_ms = round((time.perf_counter() - started) * 1000, 2)
-        log.error("health_check_failed", check="llm", latency_ms=latency_ms, detail=str(e))
-        return {"status": "error", "latency_ms": latency_ms, "detail": str(e)}
+        detail = str(e)
 
-    return {
-        "status": "ok",
-        "latency_ms": round((time.perf_counter() - started) * 1000, 2),
-        "model": settings.llm_model,
-    }
+    latency_ms = round((time.perf_counter() - started) * 1000, 2)
+    if detail is not None:
+        log.error("health_check_failed", check="llm", latency_ms=latency_ms, detail=detail)
+        return {"status": "error", "latency_ms": latency_ms, "detail": detail}
+
+    return {"status": "ok", "latency_ms": latency_ms, "model": settings.llm_model}
 
 
 @router.get("/ready")
